@@ -55,7 +55,8 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier
                                 .wrapContentHeight()
                                 .weight(1f),
-                            value = inputText, onValueChange = {
+                            value = inputText,
+                            onValueChange = {
                                 inputText = it
                             })
                         IconButton(
