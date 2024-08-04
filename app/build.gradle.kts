@@ -77,4 +77,7 @@ dependencies {
 
     // Generative AI
     implementation(libs.generativeai)
+
+    // Markdown
+    implementation(libs.markdown)
 }
