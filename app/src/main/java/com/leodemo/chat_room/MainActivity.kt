@@ -6,23 +6,32 @@ import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -32,10 +41,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
 import androidx.core.text.HtmlCompat
 import com.leodemo.chat_room.ui.theme.ChatRoomTheme
 
@@ -62,17 +70,21 @@ private fun ChatRoom(viewModel: MainViewModel) {
         topBar = {
             TopAppBar(
                 title = {
-                    Text("Chat Room")
+                    Text(
+                        text = "Chat Room",
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.LightGray
-                )
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
             )
         },
         content = { paddingValues ->
             Column(
                 Modifier
                     .navigationBarsPadding()
+                    .background(MaterialTheme.colorScheme.background)
                     .padding(paddingValues)
             ) {
                 ChatRoomAnswerArea(answer = answer)
@@ -91,16 +103,30 @@ private fun ChatRoom(viewModel: MainViewModel) {
 private fun ColumnScope.ChatRoomAnswerArea(answer: String) {
     Column(
         modifier = Modifier
+            .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .weight(1f)
             .padding(10.dp)
     ) {
-        ChatRoomText(answer)
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            ),
+            shape = RoundedCornerShape(10.dp)
+        ) {
+            if (answer.isNotEmpty()) {
+                ChatRoomText(answer)
+            }
+        }
+
     }
 }
 
 @Composable
 private fun ChatRoomText(description: String) {
+    val textColor = MaterialTheme.colorScheme.onPrimaryContainer.toArgb()
     // Remembers the HTML formatted description. Re-executes on a new description
     val htmlDescription = remember(description) {
         HtmlCompat.fromHtml(description, HtmlCompat.FROM_HTML_MODE_COMPACT)
@@ -109,10 +135,11 @@ private fun ChatRoomText(description: String) {
     // Displays the TextView on the screen and updates with the HTML description when inflated
     // Updates to htmlDescription will make AndroidView recompose and update the text
     AndroidView(
+        modifier = Modifier.padding(10.dp),
         factory = { context ->
             TextView(context).apply {
                 movementMethod = LinkMovementMethod.getInstance()
-                setTextColor(ContextCompat.getColor(context, R.color.black))
+                setTextColor(textColor)
             }
         },
         update = {
@@ -128,17 +155,32 @@ private fun ChatRoomInputField(
     var inputText by remember {
         mutableStateOf("")
     }
-    Row {
+    Row(
+        modifier = Modifier
+            .height(60.dp)
+            .fillMaxWidth()
+    ) {
         TextField(
             modifier = Modifier
-                .wrapContentHeight()
+                .fillMaxHeight()
                 .weight(1f),
             value = inputText,
             onValueChange = {
                 inputText = it
-            })
+            },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                focusedTextColor = MaterialTheme.colorScheme.primary,
+                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                cursorColor = MaterialTheme.colorScheme.primary
+            )
+        )
         IconButton(
-            modifier = Modifier.size(50.dp),
+            modifier = Modifier
+                .fillMaxHeight()
+                .width(70.dp)
+                .background(MaterialTheme.colorScheme.primaryContainer),
             onClick = onClick@{
                 if (inputText.isBlank()) return@onClick
                 sendMessage(inputText)
@@ -146,7 +188,8 @@ private fun ChatRoomInputField(
             }
         ) {
             Icon(
-                imageVector = Icons.Default.ArrowForward,
+                imageVector = Icons.Default.Send,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
                 contentDescription = null
             )
         }

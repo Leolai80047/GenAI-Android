@@ -1,6 +1,5 @@
 package com.leodemo.chat_room.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -10,17 +9,56 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
+import com.example.compose.backgroundDark
+import com.example.compose.backgroundLight
+import com.example.compose.onBackgroundDark
+import com.example.compose.onBackgroundLight
+import com.example.compose.onPrimaryContainerDark
+import com.example.compose.onPrimaryContainerLight
+import com.example.compose.onPrimaryDark
+import com.example.compose.onPrimaryLight
+import com.example.compose.onSecondaryDark
+import com.example.compose.onSecondaryLight
+import com.example.compose.primaryContainerDark
+import com.example.compose.primaryContainerLight
+import com.example.compose.primaryDark
+import com.example.compose.primaryLight
+import com.example.compose.secondaryDark
+import com.example.compose.secondaryLight
+import com.example.compose.surfaceDark
+import com.example.compose.surfaceDimLight
+import com.example.compose.surfaceLight
+import com.example.compose.surfaceVariantDark
+import com.example.compose.surfaceVariantLight
+import com.example.compose.tertiaryDark
+import com.example.compose.tertiaryLight
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    primary = primaryLight,
+    onPrimary = onPrimaryLight,
+    secondary = secondaryLight,
+    onSecondary = onSecondaryLight,
+    primaryContainer = primaryContainerLight,
+    onPrimaryContainer = onPrimaryContainerLight,
+    background = backgroundLight,
+    onBackground = onBackgroundLight,
+    surface = surfaceDimLight,
+    surfaceVariant = surfaceVariantLight,
+    tertiary = tertiaryLight
+)
+
+private val DarkColorScheme = darkColorScheme(
+    primary = primaryDark,
+    onPrimary = onPrimaryDark,
+    secondary = secondaryDark,
+    onSecondary = onSecondaryDark,
+    primaryContainer = primaryContainerDark,
+    onPrimaryContainer = onPrimaryContainerDark,
+    background = backgroundDark,
+    onBackground = onBackgroundDark,
+    surface = surfaceDark,
+    surfaceVariant = surfaceVariantDark,
+    tertiary = tertiaryDark
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
