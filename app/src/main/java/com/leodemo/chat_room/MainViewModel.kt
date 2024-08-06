@@ -30,6 +30,7 @@ class MainViewModel : ViewModel() {
     )
 
     val answer = MutableLiveData("")
+    val inputText = MutableLiveData("")
 
     fun sendMessage(message: String) {
 

@@ -1,8 +1,11 @@
 package com.leodemo.chat_room
 
 import android.os.Bundle
+import android.speech.RecognitionListener
+import android.speech.SpeechRecognizer
 import android.text.method.LinkMovementMethod
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -39,33 +42,98 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.text.HtmlCompat
 import com.leodemo.chat_room.ui.theme.ChatRoomTheme
+import com.leodemo.chat_room.utils.SpeechRecognizerManager
 
 class MainActivity : ComponentActivity() {
 
     private val viewModel by viewModels<MainViewModel>()
 
+    private lateinit var speechRecognizerManager: SpeechRecognizerManager
+    private val speechListener = object : RecognitionListener {
+        override fun onReadyForSpeech(params: Bundle?) {
+
+        }
+
+        override fun onBeginningOfSpeech() {
+
+        }
+
+        override fun onRmsChanged(rmsdB: Float) {
+
+        }
+
+        override fun onBufferReceived(buffer: ByteArray?) {
+
+        }
+
+        override fun onEndOfSpeech() {
+
+        }
+
+        override fun onError(error: Int) {
+
+        }
+
+        override fun onResults(results: Bundle?) {
+            results?.let {
+                val matched = it.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                val text = matched?.firstOrNull()
+                if (text == null) {
+                    Toast.makeText(this@MainActivity, "Unable to recognize", Toast.LENGTH_LONG)
+                        .show()
+                } else {
+                    viewModel.inputText.value += text
+                }
+            }
+        }
+
+        override fun onPartialResults(partialResults: Bundle?) {
+
+        }
+
+        override fun onEvent(eventType: Int, params: Bundle?) {
+
+        }
+
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        speechRecognizerManager = SpeechRecognizerManager(this, speechListener)
 //        enableEdgeToEdge()
         setContent {
             ChatRoomTheme {
-                ChatRoom(viewModel)
+                ChatRoom(
+                    viewModel = viewModel,
+                    startVoice = speechRecognizerManager::startVoice,
+                )
             }
         }
+    }
+
+    override fun onDestroy() {
+        speechRecognizerManager.releaseSpeechRecognizer()
+        super.onDestroy()
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ChatRoom(viewModel: MainViewModel) {
+private fun ChatRoom(
+    viewModel: MainViewModel,
+    startVoice: () -> Unit,
+) {
     val answer by viewModel.answer.observeAsState("")
+    val inputText by viewModel.inputText.observeAsState("")
     Scaffold(
         topBar = {
             TopAppBar(
@@ -92,7 +160,12 @@ private fun ChatRoom(viewModel: MainViewModel) {
                     sendMessage = { questionMessage ->
                         viewModel.sendMessage(questionMessage)
                         viewModel.answer.value = ""
-                    }
+                    },
+                    inputText = inputText,
+                    setInputText = {
+                        viewModel.inputText.value = it
+                    },
+                    startVoice = startVoice
                 )
             }
         }
@@ -150,10 +223,18 @@ private fun ChatRoomText(description: String) {
 
 @Composable
 private fun ChatRoomInputField(
-    sendMessage: (String) -> Unit
+    inputText: String,
+    setInputText: (String) -> Unit,
+    sendMessage: (String) -> Unit,
+    startVoice: () -> Unit,
 ) {
-    var inputText by remember {
-        mutableStateOf("")
+    val textFieldValueState by remember(inputText) {
+        mutableStateOf(
+            TextFieldValue(
+                text = inputText,
+                selection = TextRange(inputText.length)
+            )
+        )
     }
     Row(
         modifier = Modifier
@@ -164,9 +245,9 @@ private fun ChatRoomInputField(
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f),
-            value = inputText,
+            value = textFieldValueState,
             onValueChange = {
-                inputText = it
+                setInputText(it.text)
             },
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -174,7 +255,17 @@ private fun ChatRoomInputField(
                 focusedTextColor = MaterialTheme.colorScheme.primary,
                 focusedIndicatorColor = MaterialTheme.colorScheme.primary,
                 cursorColor = MaterialTheme.colorScheme.primary
-            )
+            ),
+            trailingIcon = {
+                IconButton(onClick = {
+                    startVoice()
+                }) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_mic),
+                        contentDescription = null
+                    )
+                }
+            }
         )
         IconButton(
             modifier = Modifier
@@ -184,7 +275,7 @@ private fun ChatRoomInputField(
             onClick = onClick@{
                 if (inputText.isBlank()) return@onClick
                 sendMessage(inputText)
-                inputText = ""
+                setInputText("")
             }
         ) {
             Icon(
