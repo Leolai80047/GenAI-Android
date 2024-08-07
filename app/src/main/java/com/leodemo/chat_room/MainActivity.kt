@@ -3,8 +3,6 @@ package com.leodemo.chat_room
 import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.SpeechRecognizer
-import android.text.method.LinkMovementMethod
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -44,13 +41,12 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.text.HtmlCompat
 import com.leodemo.chat_room.ui.theme.ChatRoomTheme
 import com.leodemo.chat_room.utils.SpeechRecognizerManager
 
@@ -199,25 +195,10 @@ private fun ColumnScope.ChatRoomAnswerArea(answer: String) {
 
 @Composable
 private fun ChatRoomText(description: String) {
-    val textColor = MaterialTheme.colorScheme.onPrimaryContainer.toArgb()
-    // Remembers the HTML formatted description. Re-executes on a new description
-    val htmlDescription = remember(description) {
-        HtmlCompat.fromHtml(description, HtmlCompat.FROM_HTML_MODE_COMPACT)
-    }
-
-    // Displays the TextView on the screen and updates with the HTML description when inflated
-    // Updates to htmlDescription will make AndroidView recompose and update the text
-    AndroidView(
+    Text(
         modifier = Modifier.padding(10.dp),
-        factory = { context ->
-            TextView(context).apply {
-                movementMethod = LinkMovementMethod.getInstance()
-                setTextColor(textColor)
-            }
-        },
-        update = {
-            it.text = htmlDescription
-        }
+        text = AnnotatedString.fromHtml(description),
+        color = MaterialTheme.colorScheme.onPrimaryContainer
     )
 }
 
