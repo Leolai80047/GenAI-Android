@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Chat-Room"
+rootProject.name = "GenAI-Android"
 include(":app")
  

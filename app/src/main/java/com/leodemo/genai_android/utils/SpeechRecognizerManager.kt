@@ -1,4 +1,4 @@
-package com.leodemo.chat_room.utils
+package com.leodemo.genai_android.utils
 
 import android.Manifest
 import android.content.Context

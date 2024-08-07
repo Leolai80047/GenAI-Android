@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.leodemo.chat_room"
+    namespace = "com.leodemo.genai_android"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.leodemo.chat_room"
+        applicationId = "com.leodemo.genai_android"
         minSdk = 21
         targetSdk = 34
         versionCode = 1

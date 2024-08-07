@@ -1,4 +1,4 @@
-package com.leodemo.chat_room
+package com.leodemo.genai_android
 
 import android.os.Bundle
 import android.speech.RecognitionListener
@@ -43,13 +43,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.leodemo.chat_room.ui.theme.ChatRoomTheme
-import com.leodemo.chat_room.utils.SpeechRecognizerManager
+import com.leodemo.genai_android.ui.theme.GenAiAndroidTheme
+import com.leodemo.genai_android.utils.SpeechRecognizerManager
 
 class MainActivity : ComponentActivity() {
 
@@ -109,7 +110,7 @@ class MainActivity : ComponentActivity() {
         speechRecognizerManager = SpeechRecognizerManager(this, speechListener)
         enableEdgeToEdge()
         setContent {
-            ChatRoomTheme {
+            GenAiAndroidTheme {
                 ChatRoom(
                     viewModel = viewModel,
                     startVoice = speechRecognizerManager::startVoice,
@@ -138,7 +139,7 @@ private fun ChatRoom(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Chat Room",
+                        text = stringResource(R.string.app_name),
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 },

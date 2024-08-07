@@ -1,4 +1,4 @@
-package com.leodemo.chat_room
+package com.leodemo.genai_android
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
