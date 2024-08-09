@@ -1,4 +1,4 @@
-package com.leodemo.genai_android
+package com.leodemo.genai_android.ui.screens.summarize
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -8,13 +8,17 @@ import com.google.ai.client.generativeai.type.BlockThreshold
 import com.google.ai.client.generativeai.type.HarmCategory
 import com.google.ai.client.generativeai.type.SafetySetting
 import com.google.ai.client.generativeai.type.generationConfig
+import com.leodemo.genai_android.BuildConfig
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.parser.MarkdownParser
+import javax.inject.Inject
 
-class MainViewModel : ViewModel() {
+@HiltViewModel
+class SummarizeViewModel @Inject constructor() : ViewModel() {
     private val model = GenerativeModel(
         "gemini-1.5-flash",
         BuildConfig.api_key,
@@ -30,10 +34,8 @@ class MainViewModel : ViewModel() {
     )
 
     val answer = MutableLiveData("")
-    val inputText = MutableLiveData("")
 
     fun sendMessage(message: String) {
-
         viewModelScope.launch {
             model.generateContentStream(message)
                 .onCompletion {

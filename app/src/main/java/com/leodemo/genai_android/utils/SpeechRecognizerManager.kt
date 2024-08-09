@@ -1,18 +1,15 @@
 package com.leodemo.genai_android.utils
 
-import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.result.contract.ActivityResultContracts
 import java.util.Locale
 
 class SpeechRecognizerManager(
-    activity: ComponentActivity,
+    private val context: Context,
     private val recognizerListener: RecognitionListener
 ) {
     private var speechRecognizer: SpeechRecognizer? = null
@@ -28,35 +25,6 @@ class SpeechRecognizerManager(
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
             )
         }
-    private val permissionLauncher = activity.registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) {
-        for ((key, isGranted) in it) {
-            if (!isGranted) {
-                Toast.makeText(activity, "You need $key permission!", Toast.LENGTH_LONG)
-                    .show()
-                return@registerForActivityResult
-            }
-        }
-        initConfig(activity)
-        speechRecognizer?.startListening(speechIntent)
-    }
-
-    fun startVoice(locale: Locale = this.locale) {
-        this.locale = locale
-        stopVoice()
-        checkPermission()
-    }
-
-    fun stopVoice() {
-        speechRecognizer?.stopListening()
-    }
-
-    fun releaseSpeechRecognizer() {
-        stopVoice()
-        speechRecognizer?.destroy()
-        speechRecognizer = null
-    }
 
     private fun initConfig(context: Context) {
         if (speechRecognizer != null) return
@@ -69,9 +37,22 @@ class SpeechRecognizerManager(
         }
     }
 
-    private fun checkPermission() {
-        permissionLauncher.launch(
-            arrayOf(Manifest.permission.RECORD_AUDIO)
-        )
+    fun startVoice(locale: Locale? = this.locale) {
+        locale?.let {
+            this.locale = it
+        }
+        stopVoice()
+        initConfig(context)
+        speechRecognizer?.startListening(speechIntent)
+    }
+
+    fun stopVoice() {
+        speechRecognizer?.cancel()
+    }
+
+    fun releaseSpeechRecognizer() {
+        speechRecognizer?.cancel()
+        speechRecognizer?.destroy()
+        speechRecognizer = null
     }
 }
