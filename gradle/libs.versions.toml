@@ -16,6 +16,7 @@ markdown = "0.7.3"
 navigationCompose = "2.8.0-beta07"
 secretsGradlePlugin = "2.0.1"
 dagger = "2.48"
+composeGlide = "1.0.0-beta01"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -41,6 +42,7 @@ markdown = { module = "org.jetbrains:markdown", version.ref = "markdown" }
 secrets-gradle-plugin = { module = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:secrets-gradle-plugin", version.ref = "secretsGradlePlugin" }
 com-google-dagger-hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "dagger" }
 com-google-dagger-hilt-android-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "dagger" }
+glide-compose = { group = "com.github.bumptech.glide", name = "compose", version.ref = "composeGlide" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

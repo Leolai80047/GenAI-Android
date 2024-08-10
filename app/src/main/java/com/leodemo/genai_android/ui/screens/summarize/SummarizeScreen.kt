@@ -1,14 +1,5 @@
 package com.leodemo.genai_android.ui.screens.summarize
 
-import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
-import android.os.Bundle
-import android.speech.RecognitionListener
-import android.speech.SpeechRecognizer
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -32,31 +23,24 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.leodemo.genai_android.R
 import com.leodemo.genai_android.ui.component.GenAITopAppBar
-import com.leodemo.genai_android.utils.SpeechRecognizerManager
-import java.util.Locale
+import com.leodemo.genai_android.ui.component.SpeechRecognizerButton
+import com.leodemo.genai_android.ui.component.StyledAnswerText
 
 
 @Composable
@@ -133,9 +117,9 @@ private fun ColumnScope.SummarizeAnswerArea(answer: String) {
 
 @Composable
 private fun SummarizeText(description: String) {
-    Text(
+    StyledAnswerText(
         modifier = Modifier.padding(10.dp),
-        text = AnnotatedString.fromHtml(description),
+        text = description,
         color = MaterialTheme.colorScheme.onPrimaryContainer
     )
 }
@@ -192,89 +176,6 @@ private fun SummarizeSendMessageButton(sendMessage: () -> Unit) {
         Icon(
             imageVector = Icons.AutoMirrored.Default.Send,
             tint = MaterialTheme.colorScheme.onPrimaryContainer,
-            contentDescription = null
-        )
-    }
-}
-
-@Composable
-private fun SpeechRecognizerButton(
-    onResult: (String) -> Unit
-) {
-    val context = LocalContext.current
-    val speechListener = object : RecognitionListener {
-        override fun onReadyForSpeech(params: Bundle?) {}
-        override fun onBeginningOfSpeech() {}
-        override fun onRmsChanged(rmsdB: Float) {}
-        override fun onBufferReceived(buffer: ByteArray?) {}
-        override fun onEndOfSpeech() {}
-        override fun onError(error: Int) {}
-        override fun onResults(results: Bundle?) {
-            results?.let {
-                val matched = it.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                val text = matched?.firstOrNull()
-                if (text == null) {
-                    Toast.makeText(context, "Unable to recognize", Toast.LENGTH_LONG)
-                        .show()
-                } else {
-                    onResult(text)
-                }
-            }
-        }
-
-        override fun onPartialResults(partialResults: Bundle?) {}
-        override fun onEvent(eventType: Int, params: Bundle?) {}
-    }
-    val speechRecognizerManager = remember {
-        SpeechRecognizerManager(
-            context,
-            speechListener
-        )
-    }
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (!isGranted) {
-            Toast.makeText(
-                context,
-                "You need permission to start speech recognizer",
-                Toast.LENGTH_LONG
-            ).show()
-        } else {
-            speechRecognizerManager.startVoice()
-        }
-    }
-
-    fun startVoice(context: Context, locale: Locale? = null) {
-        if (ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.RECORD_AUDIO
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            speechRecognizerManager.startVoice(locale)
-        } else {
-            launcher.launch(Manifest.permission.RECORD_AUDIO)
-        }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            speechRecognizerManager.releaseSpeechRecognizer()
-        }
-    }
-
-    SpeechRecognizerIcon(onClick = {
-        startVoice(context)
-    })
-}
-
-@Composable
-private fun SpeechRecognizerIcon(
-    onClick: () -> Unit
-) {
-    IconButton(onClick = onClick) {
-        Icon(
-            painter = painterResource(R.drawable.ic_mic),
             contentDescription = null
         )
     }

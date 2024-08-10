@@ -91,4 +91,7 @@ dependencies {
     // hilt
     implementation(libs.com.google.dagger.hilt.android)
     kapt(libs.com.google.dagger.hilt.android.compiler)
+
+    // Glide
+    implementation(libs.glide.compose)
 }

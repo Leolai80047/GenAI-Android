@@ -1,5 +1,6 @@
-package com.leodemo.genai_android.ui.screens.summarize
+package com.leodemo.genai_android.ui.screens.PhotoDescribeScreen
 
+import android.graphics.Bitmap
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,6 +8,7 @@ import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.BlockThreshold
 import com.google.ai.client.generativeai.type.HarmCategory
 import com.google.ai.client.generativeai.type.SafetySetting
+import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
 import com.leodemo.genai_android.BuildConfig
 import com.leodemo.genai_android.utils.markdownToHtml
@@ -16,7 +18,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class SummarizeViewModel @Inject constructor() : ViewModel() {
+class PhotoDescribeViewModel @Inject constructor() : ViewModel() {
     private val model = GenerativeModel(
         "gemini-1.5-flash",
         BuildConfig.api_key,
@@ -33,14 +35,20 @@ class SummarizeViewModel @Inject constructor() : ViewModel() {
 
     val answer = MutableLiveData("")
 
-    fun sendMessage(message: String) {
+    fun send(bitmap: Bitmap, prompt: String) {
+        if (prompt.isBlank()) return
+        answer.value = ""
+        val content = content {
+            image(bitmap)
+            text(prompt)
+        }
         viewModelScope.launch {
-            model.generateContentStream(message)
+            model.generateContentStream(content)
                 .onCompletion {
                     answer.value = answer.value?.markdownToHtml() ?: return@onCompletion
                 }
                 .collect {
-                    answer.value += it.text ?: ""
+                    answer.value += it.text
                 }
         }
     }
