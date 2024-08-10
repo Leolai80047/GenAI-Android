@@ -10,7 +10,7 @@ sealed class Screen {
     data object SummarizeScreen : Screen()
 
     @Serializable
-    data object TextImageMultiScreen : Screen()
+    data object PhotoDescribeScreen : Screen()
 
     @Serializable
     data object ChatScreen : Screen()

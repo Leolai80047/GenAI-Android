@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.leodemo.genai_android.ui.screens.PhotoDescribeScreen.PhotoDescribeScreen
 import com.leodemo.genai_android.ui.screens.Screen
 import com.leodemo.genai_android.ui.screens.menu.MenuScreen
 import com.leodemo.genai_android.ui.screens.summarize.SummarizeScreen
@@ -20,8 +21,8 @@ fun GenAiNavigation() {
         composable<Screen.SummarizeScreen> {
             SummarizeScreen()
         }
-        composable<Screen.TextImageMultiScreen> {
-
+        composable<Screen.PhotoDescribeScreen> {
+            PhotoDescribeScreen()
         }
         composable<Screen.ChatScreen> {
 

@@ -30,7 +30,7 @@ fun MenuScreen(
                 navigate(Screen.SummarizeScreen)
             }
             MenuItem(text = "Text_Image") {
-                navigate(Screen.TextImageMultiScreen)
+                navigate(Screen.PhotoDescribeScreen)
             }
             MenuItem(text = "Chat Room") {
                 navigate(Screen.ChatScreen)
