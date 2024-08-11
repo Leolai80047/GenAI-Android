@@ -14,4 +14,7 @@ sealed class Screen {
 
     @Serializable
     data object ChatScreen : Screen()
+
+    @Serializable
+    data object CameraCaptureScreen : Screen()
 }

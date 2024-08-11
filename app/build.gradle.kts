@@ -94,4 +94,9 @@ dependencies {
 
     // Glide
     implementation(libs.glide.compose)
+
+    // CameraX
+    implementation(libs.camera.camera2)
+    implementation(libs.camera.view)
+    implementation(libs.camera.lifecycle)
 }

@@ -17,6 +17,7 @@ navigationCompose = "2.8.0-beta07"
 secretsGradlePlugin = "2.0.1"
 dagger = "2.48"
 composeGlide = "1.0.0-beta01"
+cameraX = "1.3.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -43,6 +44,9 @@ secrets-gradle-plugin = { module = "com.google.android.libraries.mapsplatform.se
 com-google-dagger-hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "dagger" }
 com-google-dagger-hilt-android-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "dagger" }
 glide-compose = { group = "com.github.bumptech.glide", name = "compose", version.ref = "composeGlide" }
+camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "cameraX" }
+camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "cameraX" }
+camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "cameraX" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

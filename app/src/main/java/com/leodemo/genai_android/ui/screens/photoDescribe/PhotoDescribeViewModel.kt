@@ -1,4 +1,4 @@
-package com.leodemo.genai_android.ui.screens.PhotoDescribeScreen
+package com.leodemo.genai_android.ui.screens.photoDescribe
 
 import android.graphics.Bitmap
 import androidx.lifecycle.MutableLiveData
@@ -13,6 +13,8 @@ import com.google.ai.client.generativeai.type.generationConfig
 import com.leodemo.genai_android.BuildConfig
 import com.leodemo.genai_android.utils.markdownToHtml
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -33,6 +35,9 @@ class PhotoDescribeViewModel @Inject constructor() : ViewModel() {
         )
     )
 
+    private val _bitmap = MutableStateFlow<Bitmap?>(null)
+    val bitmap = _bitmap.asStateFlow()
+
     val answer = MutableLiveData("")
 
     fun send(bitmap: Bitmap, prompt: String) {
@@ -51,5 +56,9 @@ class PhotoDescribeViewModel @Inject constructor() : ViewModel() {
                     answer.value += it.text
                 }
         }
+    }
+
+    fun setSelectedBitmap(bitmap: Bitmap?) {
+        _bitmap.value = bitmap
     }
 }

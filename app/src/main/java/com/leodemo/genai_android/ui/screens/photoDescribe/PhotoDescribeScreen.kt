@@ -1,4 +1,4 @@
-package com.leodemo.genai_android.ui.screens.PhotoDescribeScreen
+package com.leodemo.genai_android.ui.screens.photoDescribe
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -54,6 +54,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.leodemo.genai_android.R
@@ -63,7 +64,9 @@ import com.leodemo.genai_android.ui.component.StyledAnswerText
 
 @Composable
 fun PhotoDescribeScreen(
-    viewModel: PhotoDescribeViewModel = hiltViewModel()
+    viewModel: PhotoDescribeViewModel = hiltViewModel(),
+    startCamera: () -> Unit,
+    clearBitmap: () -> Unit,
 ) {
     Scaffold(
         modifier = Modifier.imePadding(),
@@ -72,12 +75,20 @@ fun PhotoDescribeScreen(
         }
     ) { paddingValues ->
         val answer by viewModel.answer.observeAsState("")
+        val captureBitmap by viewModel.bitmap.collectAsStateWithLifecycle()
+
         PhotoDescribeContent(
             modifier = Modifier.padding(paddingValues),
             answer = answer,
+            captureBitmap = captureBitmap,
+            clearBitmap = {
+                clearBitmap()
+                viewModel.setSelectedBitmap(null)
+            },
             onSend = { bitmap, prompt ->
                 viewModel.send(bitmap, prompt)
-            }
+            },
+            startCamera = startCamera
         )
     }
 }
@@ -85,8 +96,11 @@ fun PhotoDescribeScreen(
 @Composable
 private fun PhotoDescribeContent(
     modifier: Modifier,
-    onSend: (Bitmap, String) -> Unit,
     answer: String,
+    captureBitmap: Bitmap?,
+    clearBitmap: () -> Unit,
+    onSend: (Bitmap, String) -> Unit,
+    startCamera: () -> Unit
 ) {
     fun calculateSampleSize(options: Options, reqWidth: Int, reqHeight: Int): Int {
         var sampleSize = 1
@@ -139,16 +153,23 @@ private fun PhotoDescribeContent(
         }
         PhotoDescribeAnswerArea(
             answer = answer,
-            selectedImageUri = imageUri
+            selectedImageUri = imageUri,
+            captureBitmap = captureBitmap
         )
         PhotoInputField(
             onSetImage = {
+                clearBitmap()
                 imageUri = it
             },
             onSend = onSend@{ prompt ->
-                val bitmap = uriToBitmap(context, imageUri) ?: return@onSend
+                val bitmap = if (captureBitmap == null) {
+                    uriToBitmap(context, imageUri) ?: return@onSend
+                } else {
+                    captureBitmap
+                }
                 onSend(bitmap, prompt)
-            }
+            },
+            startCamera = startCamera
         )
     }
 }
@@ -157,7 +178,8 @@ private fun PhotoDescribeContent(
 @Composable
 private fun ColumnScope.PhotoDescribeAnswerArea(
     answer: String,
-    selectedImageUri: Uri
+    selectedImageUri: Uri,
+    captureBitmap: Bitmap?
 ) {
     Column(
         modifier = Modifier
@@ -173,12 +195,12 @@ private fun ColumnScope.PhotoDescribeAnswerArea(
                 containerColor = MaterialTheme.colorScheme.primaryContainer
             )
         ) {
-            if (selectedImageUri == Uri.EMPTY) return@Card
+            if (selectedImageUri == Uri.EMPTY && captureBitmap == null) return@Card
             GlideImage(
                 modifier = Modifier
                     .size(100.dp)
                     .align(Alignment.CenterHorizontally),
-                model = selectedImageUri,
+                model = captureBitmap ?: selectedImageUri,
                 contentDescription = "",
                 contentScale = ContentScale.Fit,
                 alignment = Alignment.Center
@@ -203,7 +225,8 @@ private fun ColumnScope.PhotoDescribeAnswerArea(
 @Composable
 private fun PhotoInputField(
     onSetImage: (Uri) -> Unit,
-    onSend: (String) -> Unit
+    onSend: (String) -> Unit,
+    startCamera: () -> Unit,
 ) {
     var textFieldValue by remember {
         mutableStateOf(TextFieldValue(""))
@@ -257,6 +280,7 @@ private fun PhotoInputField(
                         }
                     )
                     PhotoDescribeImagePicker(onSetImage = onSetImage)
+                    PhotoDescribeCameraCapture(startCamera = startCamera)
                 }
             }
         )
@@ -309,11 +333,20 @@ private fun PhotoDescribeImagePicker(
     }
 
     PhotoDescribeInputFieldTrailIcon(
-        painter = painterResource(R.drawable.ic_camera),
+        painter = painterResource(R.drawable.ic_image),
         onClick = {
             launcher.launch(
                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
             )
         }
     )
+}
+
+@Composable
+private fun PhotoDescribeCameraCapture(
+    startCamera: () -> Unit
+) {
+    PhotoDescribeInputFieldTrailIcon(painter = painterResource(R.drawable.ic_camera)) {
+        startCamera()
+    }
 }
