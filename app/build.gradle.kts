@@ -5,7 +5,8 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.serialization)
     alias(libs.plugins.com.google.dagger.hilt.android)
     alias(libs.plugins.jetbrains.kotlin.kapt)
-
+    alias(libs.plugins.gms.googleServices)
+    alias(libs.plugins.firebase.crashlytics)
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
 }
 
@@ -27,7 +28,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+            isDebuggable = true
+        }
+
         release {
+            isDebuggable = false
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -76,6 +83,11 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
 
     // Generative AI
     implementation(libs.generativeai)

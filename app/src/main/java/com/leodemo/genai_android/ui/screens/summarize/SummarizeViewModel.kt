@@ -8,9 +8,11 @@ import com.google.ai.client.generativeai.type.BlockThreshold
 import com.google.ai.client.generativeai.type.HarmCategory
 import com.google.ai.client.generativeai.type.SafetySetting
 import com.google.ai.client.generativeai.type.generationConfig
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.leodemo.genai_android.BuildConfig
 import com.leodemo.genai_android.utils.markdownToHtml
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -36,6 +38,10 @@ class SummarizeViewModel @Inject constructor() : ViewModel() {
     fun sendMessage(message: String) {
         viewModelScope.launch {
             model.generateContentStream(message)
+                .catch {
+                    FirebaseCrashlytics.getInstance().log("Prompt: $message")
+                    FirebaseCrashlytics.getInstance().recordException(it)
+                }
                 .onCompletion {
                     answer.value = answer.value?.markdownToHtml() ?: return@onCompletion
                 }

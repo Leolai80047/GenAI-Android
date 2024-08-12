@@ -6,6 +6,8 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.serialization) apply false
     alias(libs.plugins.com.google.dagger.hilt.android) apply false
     alias(libs.plugins.jetbrains.kotlin.kapt) apply false
+    alias(libs.plugins.gms.googleServices) apply false
+    alias(libs.plugins.firebase.crashlytics) apply false
 }
 
 buildscript {
