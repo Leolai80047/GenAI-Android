@@ -10,7 +10,7 @@ import com.google.ai.client.generativeai.type.SafetySetting
 import com.google.ai.client.generativeai.type.generationConfig
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.leodemo.genai_android.BuildConfig
-import com.leodemo.genai_android.utils.markdownToHtml
+import com.leodemo.genai_android.utils.extensions.markdownToHtml
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onCompletion

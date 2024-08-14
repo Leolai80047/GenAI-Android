@@ -1,4 +1,4 @@
-package com.leodemo.genai_android.utils
+package com.leodemo.genai_android.utils.extensions
 
 import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
 import org.intellij.markdown.html.HtmlGenerator

@@ -1,16 +1,19 @@
 package com.leodemo.genai_android.ui.navigation
 
-import android.graphics.Bitmap
+import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.leodemo.genai_android.ui.screens.Screen
+import com.leodemo.genai_android.ui.screens.menu.MenuScreen
 import com.leodemo.genai_android.ui.screens.photoDescribe.CameraCaptureScreen
 import com.leodemo.genai_android.ui.screens.photoDescribe.PhotoDescribeScreen
 import com.leodemo.genai_android.ui.screens.photoDescribe.PhotoDescribeViewModel
-import com.leodemo.genai_android.ui.screens.Screen
-import com.leodemo.genai_android.ui.screens.menu.MenuScreen
 import com.leodemo.genai_android.ui.screens.summarize.SummarizeScreen
 
 private const val BITMAP_SELECT_KEY = "BITMAP_SELECT"
@@ -29,14 +32,17 @@ fun GenAiNavigation() {
         }
         composable<Screen.PhotoDescribeScreen> { navBackStackEntry ->
             val viewModel = hiltViewModel<PhotoDescribeViewModel>()
-            viewModel.setSelectedBitmap(navBackStackEntry.savedStateHandle[BITMAP_SELECT_KEY])
+            val uri by remember {
+                mutableStateOf(
+                    navBackStackEntry.savedStateHandle.get<Uri>(BITMAP_SELECT_KEY)
+                )
+            }
+            viewModel.setSelectedUri(uri)
+            navBackStackEntry.savedStateHandle.remove<Uri>(BITMAP_SELECT_KEY)
             PhotoDescribeScreen(
                 viewModel = viewModel,
                 startCamera = {
                     navController.navigate(Screen.CameraCaptureScreen)
-                },
-                clearBitmap = {
-                    navBackStackEntry.savedStateHandle.remove<Bitmap>(BITMAP_SELECT_KEY)
                 }
             )
         }
@@ -45,10 +51,10 @@ fun GenAiNavigation() {
         }
         composable<Screen.CameraCaptureScreen> {
             CameraCaptureScreen(
-                onBack = { bitmap ->
+                onBack = { uri ->
                     navController.previousBackStackEntry
                         ?.savedStateHandle
-                        ?.set(BITMAP_SELECT_KEY, bitmap)
+                        ?.set(BITMAP_SELECT_KEY, uri)
                     navController.popBackStack()
                 }
             )

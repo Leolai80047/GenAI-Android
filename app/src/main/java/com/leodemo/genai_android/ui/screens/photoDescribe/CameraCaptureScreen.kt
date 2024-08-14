@@ -3,6 +3,7 @@ package com.leodemo.genai_android.ui.screens.photoDescribe
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,12 +33,15 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -47,6 +51,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
@@ -59,17 +64,27 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leodemo.genai_android.R
+import com.leodemo.genai_android.utils.extensions.saveToUri
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CameraCaptureScreen(
     viewModel: CameraCaptureViewModel = hiltViewModel(),
-    onBack: (Bitmap?) -> Unit
+    onBack: (Uri?) -> Unit
 ) {
-    val scaffoldState = rememberBottomSheetScaffoldState()
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val scaffoldState = rememberBottomSheetScaffoldState(
+        bottomSheetState = rememberStandardBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            skipHiddenState = false
+        )
+    )
     val bitmaps by viewModel.bitmaps.collectAsStateWithLifecycle()
+    var isLoading by remember {
+        mutableStateOf(false)
+    }
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
         sheetPeekHeight = 0.dp,
@@ -77,7 +92,14 @@ fun CameraCaptureScreen(
         sheetContent = {
             CameraCaptureBottomSheet(
                 bitmaps = bitmaps,
-                onBitmapSelect = onBack
+                onBitmapSelect = { bitmap ->
+                    isLoading = true
+                    coroutineScope.launch {
+                        scaffoldState.bottomSheetState.hide()
+                        val uri = bitmap.saveToUri(context, "image.png")
+                        onBack(uri)
+                    }
+                },
             )
         }
     ) {
@@ -98,12 +120,15 @@ fun CameraCaptureScreen(
                 )
             }
         )
+        if (isLoading) {
+            CameraCaptureFullScreenOverlayLoading()
+        }
     }
 }
 
 @Composable
 private fun CameraCapturePermissionContent(
-    onBack: (Bitmap?) -> Unit,
+    onBack: (Uri?) -> Unit,
     content: @Composable () -> Unit
 ) {
     var hasPermission by remember {
@@ -143,17 +168,17 @@ private fun CameraCaptureContent(
     onPictureTaken: (ImageProxy) -> Unit,
     switchCamera: (LifecycleCameraController) -> Unit
 ) {
+    val context = LocalContext.current
+    val cameraController = remember {
+        LifecycleCameraController(context).apply {
+            setEnabledUseCases(
+                CameraController.IMAGE_CAPTURE
+            )
+        }
+    }
     Box(
         modifier = modifier
     ) {
-        val context = LocalContext.current
-        val cameraController = remember {
-            LifecycleCameraController(context).apply {
-                setEnabledUseCases(
-                    CameraController.IMAGE_CAPTURE
-                )
-            }
-        }
         CameraPreview(
             modifier = Modifier.fillMaxSize(),
             controller = cameraController
@@ -171,6 +196,7 @@ private fun CameraCaptureContent(
             openBottomSheet = openBottomSheet,
             onPictureTaken = onPictureTaken
         )
+
     }
 }
 
@@ -327,6 +353,20 @@ private fun CameraCaptureIcon(
             painter = painter,
             tint = MaterialTheme.colorScheme.onPrimaryContainer,
             contentDescription = null
+        )
+    }
+}
+
+@Composable
+private fun CameraCaptureFullScreenOverlayLoading() {
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .background(Color.Black.copy(alpha = 0.5f))
+        .clickable {}
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.align(Alignment.Center),
+            color = MaterialTheme.colorScheme.primary
         )
     }
 }

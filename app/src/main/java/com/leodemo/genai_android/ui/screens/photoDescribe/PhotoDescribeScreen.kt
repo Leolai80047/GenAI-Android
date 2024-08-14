@@ -36,7 +36,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -57,6 +56,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.leodemo.genai_android.R
 import com.leodemo.genai_android.ui.component.GenAITopAppBar
 import com.leodemo.genai_android.ui.component.SpeechRecognizerButton
@@ -66,7 +66,6 @@ import com.leodemo.genai_android.ui.component.StyledAnswerText
 fun PhotoDescribeScreen(
     viewModel: PhotoDescribeViewModel = hiltViewModel(),
     startCamera: () -> Unit,
-    clearBitmap: () -> Unit,
 ) {
     Scaffold(
         modifier = Modifier.imePadding(),
@@ -74,20 +73,15 @@ fun PhotoDescribeScreen(
             GenAITopAppBar(title = stringResource(R.string.app_name))
         }
     ) { paddingValues ->
-        val answer by viewModel.answer.observeAsState("")
-        val captureBitmap by viewModel.bitmap.collectAsStateWithLifecycle()
+        val answer by viewModel.answer.collectAsStateWithLifecycle("")
+        val imageUri by viewModel.imageUri.collectAsStateWithLifecycle()
 
         PhotoDescribeContent(
             modifier = Modifier.padding(paddingValues),
             answer = answer,
-            captureBitmap = captureBitmap,
-            clearBitmap = {
-                clearBitmap()
-                viewModel.setSelectedBitmap(null)
-            },
-            onSend = { bitmap, prompt ->
-                viewModel.send(bitmap, prompt)
-            },
+            imageUri = imageUri ?: Uri.EMPTY,
+            onSelectImage = viewModel::setSelectedUri,
+            onSend = viewModel::send,
             startCamera = startCamera
         )
     }
@@ -97,8 +91,8 @@ fun PhotoDescribeScreen(
 private fun PhotoDescribeContent(
     modifier: Modifier,
     answer: String,
-    captureBitmap: Bitmap?,
-    clearBitmap: () -> Unit,
+    imageUri: Uri,
+    onSelectImage: (Uri) -> Unit,
     onSend: (Bitmap, String) -> Unit,
     startCamera: () -> Unit
 ) {
@@ -148,25 +142,14 @@ private fun PhotoDescribeContent(
         modifier = modifier.background(MaterialTheme.colorScheme.background)
     ) {
         val context = LocalContext.current
-        var imageUri by remember {
-            mutableStateOf<Uri>(Uri.EMPTY)
-        }
         PhotoDescribeAnswerArea(
             answer = answer,
-            selectedImageUri = imageUri,
-            captureBitmap = captureBitmap
+            selectedImageUri = imageUri
         )
         PhotoInputField(
-            onSetImage = {
-                clearBitmap()
-                imageUri = it
-            },
+            onSelectImage = onSelectImage,
             onSend = onSend@{ prompt ->
-                val bitmap = if (captureBitmap == null) {
-                    uriToBitmap(context, imageUri) ?: return@onSend
-                } else {
-                    captureBitmap
-                }
+                val bitmap = uriToBitmap(context, imageUri) ?: return@onSend
                 onSend(bitmap, prompt)
             },
             startCamera = startCamera
@@ -179,7 +162,6 @@ private fun PhotoDescribeContent(
 private fun ColumnScope.PhotoDescribeAnswerArea(
     answer: String,
     selectedImageUri: Uri,
-    captureBitmap: Bitmap?
 ) {
     Column(
         modifier = Modifier
@@ -195,16 +177,19 @@ private fun ColumnScope.PhotoDescribeAnswerArea(
                 containerColor = MaterialTheme.colorScheme.primaryContainer
             )
         ) {
-            if (selectedImageUri == Uri.EMPTY && captureBitmap == null) return@Card
+            if (selectedImageUri == Uri.EMPTY) return@Card
             GlideImage(
                 modifier = Modifier
                     .size(100.dp)
                     .align(Alignment.CenterHorizontally),
-                model = captureBitmap ?: selectedImageUri,
+                model = selectedImageUri,
                 contentDescription = "",
                 contentScale = ContentScale.Fit,
                 alignment = Alignment.Center
-            )
+            ) {
+                it.diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .skipMemoryCache(true)
+            }
             if (answer.isBlank()) return@Card
             HorizontalDivider(
                 modifier = Modifier
@@ -224,7 +209,7 @@ private fun ColumnScope.PhotoDescribeAnswerArea(
 
 @Composable
 private fun PhotoInputField(
-    onSetImage: (Uri) -> Unit,
+    onSelectImage: (Uri) -> Unit,
     onSend: (String) -> Unit,
     startCamera: () -> Unit,
 ) {
@@ -279,7 +264,7 @@ private fun PhotoInputField(
                             textFieldValue = TextFieldValue(it)
                         }
                     )
-                    PhotoDescribeImagePicker(onSetImage = onSetImage)
+                    PhotoDescribeImagePicker(onSetImage = onSelectImage)
                     PhotoDescribeCameraCapture(startCamera = startCamera)
                 }
             }

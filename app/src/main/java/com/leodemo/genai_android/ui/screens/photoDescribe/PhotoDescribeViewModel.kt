@@ -1,7 +1,7 @@
 package com.leodemo.genai_android.ui.screens.photoDescribe
 
 import android.graphics.Bitmap
-import androidx.lifecycle.MutableLiveData
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.ai.client.generativeai.GenerativeModel
@@ -12,7 +12,7 @@ import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.leodemo.genai_android.BuildConfig
-import com.leodemo.genai_android.utils.markdownToHtml
+import com.leodemo.genai_android.utils.extensions.markdownToHtml
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,10 +37,10 @@ class PhotoDescribeViewModel @Inject constructor() : ViewModel() {
         )
     )
 
-    private val _bitmap = MutableStateFlow<Bitmap?>(null)
-    val bitmap = _bitmap.asStateFlow()
+    private val _imageUri = MutableStateFlow<Uri?>(null)
+    val imageUri = _imageUri.asStateFlow()
 
-    val answer = MutableLiveData("")
+    val answer = MutableStateFlow("")
 
     fun send(bitmap: Bitmap, prompt: String) {
         if (prompt.isBlank()) return
@@ -67,7 +67,8 @@ class PhotoDescribeViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    fun setSelectedBitmap(bitmap: Bitmap?) {
-        _bitmap.value = bitmap
+    fun setSelectedUri(uri: Uri?) {
+        answer.value = ""
+        _imageUri.value = uri
     }
 }
