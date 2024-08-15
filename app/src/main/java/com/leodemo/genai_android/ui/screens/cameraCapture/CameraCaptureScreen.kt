@@ -1,4 +1,4 @@
-package com.leodemo.genai_android.ui.screens.photoDescribe
+package com.leodemo.genai_android.ui.screens.cameraCapture
 
 import android.Manifest
 import android.content.pm.PackageManager

@@ -11,7 +11,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.leodemo.genai_android.ui.screens.Screen
 import com.leodemo.genai_android.ui.screens.menu.MenuScreen
-import com.leodemo.genai_android.ui.screens.photoDescribe.CameraCaptureScreen
+import com.leodemo.genai_android.ui.screens.cameraCapture.CameraCaptureScreen
 import com.leodemo.genai_android.ui.screens.photoDescribe.PhotoDescribeScreen
 import com.leodemo.genai_android.ui.screens.photoDescribe.PhotoDescribeViewModel
 import com.leodemo.genai_android.ui.screens.summarize.SummarizeScreen

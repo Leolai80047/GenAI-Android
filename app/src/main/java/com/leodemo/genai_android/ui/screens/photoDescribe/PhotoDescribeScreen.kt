@@ -1,11 +1,6 @@
 package com.leodemo.genai_android.ui.screens.photoDescribe
 
-import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.BitmapFactory.Options
 import android.net.Uri
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -14,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,11 +25,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,27 +59,32 @@ import com.leodemo.genai_android.R
 import com.leodemo.genai_android.ui.component.GenAITopAppBar
 import com.leodemo.genai_android.ui.component.SpeechRecognizerButton
 import com.leodemo.genai_android.ui.component.StyledAnswerText
+import com.leodemo.genai_android.utils.extensions.toBitmap
 
 @Composable
 fun PhotoDescribeScreen(
     viewModel: PhotoDescribeViewModel = hiltViewModel(),
     startCamera: () -> Unit,
 ) {
+    val context = LocalContext.current
+    val answerState by viewModel.answerState.collectAsStateWithLifecycle()
+    val imageUri by viewModel.imageUri.collectAsStateWithLifecycle()
     Scaffold(
         modifier = Modifier.imePadding(),
         topBar = {
             GenAITopAppBar(title = stringResource(R.string.app_name))
         }
     ) { paddingValues ->
-        val answer by viewModel.answer.collectAsStateWithLifecycle("")
-        val imageUri by viewModel.imageUri.collectAsStateWithLifecycle()
-
         PhotoDescribeContent(
             modifier = Modifier.padding(paddingValues),
-            answer = answer,
+            answerState = answerState,
             imageUri = imageUri ?: Uri.EMPTY,
             onSelectImage = viewModel::setSelectedUri,
-            onSend = viewModel::send,
+            onSend = { prompt ->
+                imageUri.toBitmap(context)?.let { bitmap ->
+                    viewModel.send(bitmap, prompt)
+                }
+            },
             startCamera = startCamera
         )
     }
@@ -90,68 +93,23 @@ fun PhotoDescribeScreen(
 @Composable
 private fun PhotoDescribeContent(
     modifier: Modifier,
-    answer: String,
+    answerState: PhotoDescribeUiState,
     imageUri: Uri,
     onSelectImage: (Uri) -> Unit,
-    onSend: (Bitmap, String) -> Unit,
+    onSend: (String) -> Unit,
     startCamera: () -> Unit
 ) {
-    fun calculateSampleSize(options: Options, reqWidth: Int, reqHeight: Int): Int {
-        var sampleSize = 1
-        val (width: Int, height: Int) = options.run {
-            outWidth to outHeight
-        }
-
-        if (width > reqWidth || height > reqHeight) {
-            val halfWidth = width / 2
-            val halfHeight = height / 2
-
-            while ((halfWidth / sampleSize) >= reqWidth || (halfHeight / sampleSize) >= reqHeight) {
-                sampleSize *= 2
-            }
-        }
-
-        return sampleSize
-    }
-
-    fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
-        val contentResolver = context.contentResolver
-        return try {
-            val inputStream = contentResolver.openInputStream(uri)
-            var bitmap: Bitmap? = null
-            inputStream?.use {
-                val options = Options().apply {
-                    inJustDecodeBounds = true
-                }
-                options.apply {
-                    val size = 768
-                    inSampleSize = calculateSampleSize(options, size, size)
-                    inJustDecodeBounds = false
-                }
-
-                bitmap = BitmapFactory.decodeStream(inputStream, null, options)
-            }
-            bitmap
-        } catch (e: Exception) {
-            Toast.makeText(context, "Bitmap convert error!", Toast.LENGTH_LONG).show()
-            null
-        }
-    }
-
     Column(
         modifier = modifier.background(MaterialTheme.colorScheme.background)
     ) {
-        val context = LocalContext.current
+        PhotoDescribeAnswerStateView(answerState = answerState)
         PhotoDescribeAnswerArea(
-            answer = answer,
+            answer = answerState.data,
             selectedImageUri = imageUri
         )
         PhotoInputField(
             onSelectImage = onSelectImage,
-            onSend = onSend@{ prompt ->
-                val bitmap = uriToBitmap(context, imageUri) ?: return@onSend
-                onSend(bitmap, prompt)
-            },
+            onSend = onSend,
             startCamera = startCamera
         )
     }
@@ -181,6 +139,7 @@ private fun ColumnScope.PhotoDescribeAnswerArea(
             GlideImage(
                 modifier = Modifier
                     .size(100.dp)
+                    .padding(10.dp)
                     .align(Alignment.CenterHorizontally),
                 model = selectedImageUri,
                 contentDescription = "",
@@ -269,21 +228,12 @@ private fun PhotoInputField(
                 }
             }
         )
-        IconButton(
-            modifier = Modifier
-                .size(50.dp)
-                .align(Alignment.CenterVertically),
+        PhotoDescribeSendButton(
             onClick = {
                 onSend(textFieldValue.text)
                 textFieldValue = TextFieldValue("")
             }
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Default.Send,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSecondary
-            )
-        }
+        )
     }
 
 }
@@ -301,6 +251,24 @@ private fun PhotoDescribeInputFieldTrailIcon(
             painter = painter,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.secondary
+        )
+    }
+}
+
+@Composable
+private fun RowScope.PhotoDescribeSendButton(
+    onClick: () -> Unit
+) {
+    IconButton(
+        modifier = Modifier
+            .size(50.dp)
+            .align(Alignment.CenterVertically),
+        onClick = onClick
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Default.Send,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSecondary
         )
     }
 }
@@ -333,5 +301,45 @@ private fun PhotoDescribeCameraCapture(
 ) {
     PhotoDescribeInputFieldTrailIcon(painter = painterResource(R.drawable.ic_camera)) {
         startCamera()
+    }
+}
+
+@Composable
+private fun PhotoDescribeAnswerStateView(
+    answerState: PhotoDescribeUiState
+) {
+    when (answerState) {
+        is PhotoDescribeUiState.Loading -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(30.dp)
+                        .align(Alignment.Center),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+
+        is PhotoDescribeUiState.Error -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp)
+                    .padding(10.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.error)
+            ) {
+                Text(
+                    modifier = Modifier.align(Alignment.Center),
+                    text = "Something went error!",
+                    color = MaterialTheme.colorScheme.onError
+                )
+            }
+        }
+
+        is PhotoDescribeUiState.Idle -> Unit
     }
 }
