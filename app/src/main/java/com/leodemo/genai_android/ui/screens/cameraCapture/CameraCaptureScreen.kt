@@ -13,6 +13,8 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -51,6 +53,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
@@ -65,6 +68,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leodemo.genai_android.R
 import com.leodemo.genai_android.utils.extensions.saveToUri
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -109,6 +114,7 @@ fun CameraCaptureScreen(
                 CameraCaptureContent(
                     modifier = Modifier
                         .fillMaxSize()
+                        .background(Color.Black)
                         .navigationBarsPadding(),
                     openBottomSheet = {
                         coroutineScope.launch {
@@ -169,12 +175,16 @@ private fun CameraCaptureContent(
     switchCamera: (LifecycleCameraController) -> Unit
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val cameraController = remember {
         LifecycleCameraController(context).apply {
             setEnabledUseCases(
                 CameraController.IMAGE_CAPTURE
             )
         }
+    }
+    var isShutterAnimating by remember {
+        mutableStateOf(false)
     }
     Box(
         modifier = modifier
@@ -192,11 +202,22 @@ private fun CameraCaptureContent(
             }
         )
         CameraCaptureBottomTool(
-            cameraController = cameraController,
             openBottomSheet = openBottomSheet,
+            takePicture = takePicture@{ callback ->
+                if (isShutterAnimating) return@takePicture
+                isShutterAnimating = true
+                cameraController.takePicture(
+                    ContextCompat.getMainExecutor(context),
+                    callback
+                )
+                coroutineScope.launch(Dispatchers.IO) {
+                    delay(300)
+                    isShutterAnimating = false
+                }
+            },
             onPictureTaken = onPictureTaken
         )
-
+        CameraCaptureShutterMask(isShutterAnimating)
     }
 }
 
@@ -243,9 +264,31 @@ private fun CameraPreview(
     modifier: Modifier = Modifier,
     controller: LifecycleCameraController
 ) {
+    val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    var enable by remember {
+        mutableStateOf(false)
+    }
+    val alpha by animateFloatAsState(
+        targetValue = if (enable) 1f else 0f,
+        animationSpec = tween(
+            500,
+        ),
+        label = "Camera Preview Fade In"
+    )
+    LaunchedEffect(Unit) {
+        controller.initializationFuture.addListener({
+            try {
+                controller.initializationFuture.get()
+                enable = true
+            } catch (e: Exception) {
+                Toast.makeText(context, "Camera init error!", Toast.LENGTH_LONG).show()
+            }
+        }, ContextCompat.getMainExecutor(context))
+    }
+
     AndroidView(
-        modifier = modifier,
+        modifier = modifier.alpha(alpha),
         factory = {
             PreviewView(it).apply {
                 this.controller = controller
@@ -253,6 +296,7 @@ private fun CameraPreview(
             }
         }
     )
+
 }
 
 @Composable
@@ -275,8 +319,8 @@ private fun CameraSwitcher(
 
 @Composable
 private fun BoxScope.CameraCaptureBottomTool(
-    cameraController: LifecycleCameraController,
     openBottomSheet: () -> Unit,
+    takePicture: (OnImageCapturedCallback) -> Unit,
     onPictureTaken: (ImageProxy) -> Unit,
 ) {
     Row(
@@ -288,8 +332,8 @@ private fun BoxScope.CameraCaptureBottomTool(
     ) {
         CameraCaptureImageSelector(openBottomSheet = openBottomSheet)
         CameraCapturePictureTaker(
-            cameraController = cameraController,
-            onPictureTaken = onPictureTaken
+            takePicture = takePicture,
+            onPictureTakenSuccess = onPictureTaken
         )
     }
 }
@@ -306,30 +350,29 @@ private fun CameraCaptureImageSelector(
 
 @Composable
 private fun CameraCapturePictureTaker(
-    cameraController: LifecycleCameraController,
-    onPictureTaken: (ImageProxy) -> Unit
+    takePicture: (OnImageCapturedCallback) -> Unit,
+    onPictureTakenSuccess: (ImageProxy) -> Unit
 ) {
     val context = LocalContext.current
-    val imageCapturedCallback = object : OnImageCapturedCallback() {
-        override fun onCaptureSuccess(image: ImageProxy) {
-            super.onCaptureSuccess(image)
-            onPictureTaken(image)
-            image.close()
-        }
+    val imageCapturedCallback = remember {
+        object : OnImageCapturedCallback() {
+            override fun onCaptureSuccess(image: ImageProxy) {
+                super.onCaptureSuccess(image)
+                onPictureTakenSuccess(image)
+                image.close()
+            }
 
-        override fun onError(exception: ImageCaptureException) {
-            super.onError(exception)
-            Toast.makeText(context, "Camera capture error!", Toast.LENGTH_LONG)
-                .show()
+            override fun onError(exception: ImageCaptureException) {
+                super.onError(exception)
+                Toast.makeText(context, "Camera capture error!", Toast.LENGTH_LONG)
+                    .show()
+            }
         }
     }
     CameraCaptureIcon(
         painter = painterResource(R.drawable.ic_camera),
         onClick = {
-            cameraController.takePicture(
-                ContextCompat.getMainExecutor(context),
-                imageCapturedCallback
-            )
+            takePicture(imageCapturedCallback)
         }
     )
 }
@@ -355,6 +398,23 @@ private fun CameraCaptureIcon(
             contentDescription = null
         )
     }
+}
+
+@Composable
+private fun CameraCaptureShutterMask(
+    isShutterAnimating: Boolean
+) {
+    val alpha by animateFloatAsState(
+        targetValue = if (isShutterAnimating) 1f else 0f,
+        label = "Shutter Effect",
+    )
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .alpha(alpha)
+            .background(Color.Black)
+
+    )
 }
 
 @Composable
