@@ -6,6 +6,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -48,6 +50,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -59,6 +62,7 @@ import com.leodemo.genai_android.R
 import com.leodemo.genai_android.ui.component.GenAITopAppBar
 import com.leodemo.genai_android.ui.component.SpeechRecognizerButton
 import com.leodemo.genai_android.ui.component.StyledAnswerText
+import com.leodemo.genai_android.ui.component.shape.ChatBubbleShape
 import com.leodemo.genai_android.utils.extensions.toBitmap
 
 @Composable
@@ -67,8 +71,8 @@ fun PhotoDescribeScreen(
     startCamera: () -> Unit,
 ) {
     val context = LocalContext.current
-    val answerState by viewModel.answerState.collectAsStateWithLifecycle()
-    val imageUri by viewModel.imageUri.collectAsStateWithLifecycle()
+    val answerUiState by viewModel.answerUiState.collectAsStateWithLifecycle()
+    val promptUiState by viewModel.promptUiState.collectAsStateWithLifecycle()
     Scaffold(
         modifier = Modifier.imePadding(),
         topBar = {
@@ -77,11 +81,11 @@ fun PhotoDescribeScreen(
     ) { paddingValues ->
         PhotoDescribeContent(
             modifier = Modifier.padding(paddingValues),
-            answerState = answerState,
-            imageUri = imageUri ?: Uri.EMPTY,
+            promptUiState = promptUiState,
+            answerUiState = answerUiState,
             onSelectImage = viewModel::setSelectedUri,
             onSend = { prompt ->
-                imageUri.toBitmap(context)?.let { bitmap ->
+                promptUiState.uri.toBitmap(context)?.let { bitmap ->
                     viewModel.send(bitmap, prompt)
                 }
             },
@@ -93,8 +97,8 @@ fun PhotoDescribeScreen(
 @Composable
 private fun PhotoDescribeContent(
     modifier: Modifier,
-    answerState: PhotoDescribeUiState,
-    imageUri: Uri,
+    promptUiState: PhotoDescribePromptUiState,
+    answerUiState: PhotoDescribeAnswerUiState,
     onSelectImage: (Uri) -> Unit,
     onSend: (String) -> Unit,
     startCamera: () -> Unit
@@ -102,12 +106,13 @@ private fun PhotoDescribeContent(
     Column(
         modifier = modifier.background(MaterialTheme.colorScheme.background)
     ) {
-        PhotoDescribeAnswerStateView(answerState = answerState)
-        PhotoDescribeAnswerArea(
-            answer = answerState.data,
-            selectedImageUri = imageUri
+        PhotoDescribeAnswerStateView(answerUiState = answerUiState)
+        PhotoDescribeChatArea(
+            promptUiState = promptUiState,
+            answer = answerUiState.data,
         )
         PhotoInputField(
+            answerUiState = answerUiState,
             onSelectImage = onSelectImage,
             onSend = onSend,
             startCamera = startCamera
@@ -115,11 +120,10 @@ private fun PhotoDescribeContent(
     }
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-private fun ColumnScope.PhotoDescribeAnswerArea(
+private fun ColumnScope.PhotoDescribeChatArea(
+    promptUiState: PhotoDescribePromptUiState,
     answer: String,
-    selectedImageUri: Uri,
 ) {
     Column(
         modifier = Modifier
@@ -127,47 +131,91 @@ private fun ColumnScope.PhotoDescribeAnswerArea(
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
     ) {
-        Card(
+        PhotoDescribeQuestionBubble(
+            text = promptUiState.question,
+            margin = 5.dp
+        )
+        PhotoDescribeAnswerArea(
+            uri = promptUiState.uri ?: Uri.EMPTY,
+            answer = answer
+        )
+    }
+}
+
+@Composable
+private fun PhotoDescribeQuestionBubble(
+    text: String,
+    margin: Dp
+) {
+    if (text.isBlank()) return
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val fraction = 0.8f
+        val maxAllowedWidth = maxWidth * fraction
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
+                .widthIn(max = maxAllowedWidth)
+                .align(Alignment.CenterEnd)
+                .padding(top = 10.dp, end = 10.dp)
+                .clip(ChatBubbleShape(margin = margin))
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                .padding(bottom = margin, end = margin)
         ) {
-            if (selectedImageUri == Uri.EMPTY) return@Card
-            GlideImage(
-                modifier = Modifier
-                    .size(100.dp)
-                    .padding(10.dp)
-                    .align(Alignment.CenterHorizontally),
-                model = selectedImageUri,
-                contentDescription = "",
-                contentScale = ContentScale.Fit,
-                alignment = Alignment.Center
-            ) {
-                it.diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .skipMemoryCache(true)
-            }
-            if (answer.isBlank()) return@Card
-            HorizontalDivider(
-                modifier = Modifier
-                    .height(1.dp)
-                    .background(MaterialTheme.colorScheme.onPrimaryContainer)
-            )
-            StyledAnswerText(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp),
-                text = answer,
+            Text(
+                modifier = Modifier.padding(5.dp),
+                text = text,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
     }
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+private fun PhotoDescribeAnswerArea(
+    uri: Uri,
+    answer: String
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(10.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        if (uri == Uri.EMPTY) return@Card
+        GlideImage(
+            modifier = Modifier
+                .size(100.dp)
+                .padding(10.dp)
+                .align(Alignment.CenterHorizontally),
+            model = uri,
+            contentDescription = "",
+            contentScale = ContentScale.Fit,
+            alignment = Alignment.Center
+        ) {
+            it.diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true)
+        }
+        if (answer.isBlank()) return@Card
+        HorizontalDivider(
+            modifier = Modifier
+                .height(1.dp)
+                .background(MaterialTheme.colorScheme.onSecondaryContainer)
+        )
+        StyledAnswerText(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp),
+            text = answer,
+            color = MaterialTheme.colorScheme.onSecondaryContainer
+        )
+    }
+}
+
 @Composable
 private fun PhotoInputField(
+    answerUiState: PhotoDescribeAnswerUiState,
     onSelectImage: (Uri) -> Unit,
     onSend: (String) -> Unit,
     startCamera: () -> Unit,
@@ -229,6 +277,7 @@ private fun PhotoInputField(
             }
         )
         PhotoDescribeSendButton(
+            enable = answerUiState !is PhotoDescribeAnswerUiState.Loading,
             onClick = {
                 onSend(textFieldValue.text)
                 textFieldValue = TextFieldValue("")
@@ -257,12 +306,14 @@ private fun PhotoDescribeInputFieldTrailIcon(
 
 @Composable
 private fun RowScope.PhotoDescribeSendButton(
+    enable: Boolean,
     onClick: () -> Unit
 ) {
     IconButton(
         modifier = Modifier
             .size(50.dp)
             .align(Alignment.CenterVertically),
+        enabled = enable,
         onClick = onClick
     ) {
         Icon(
@@ -306,10 +357,10 @@ private fun PhotoDescribeCameraCapture(
 
 @Composable
 private fun PhotoDescribeAnswerStateView(
-    answerState: PhotoDescribeUiState
+    answerUiState: PhotoDescribeAnswerUiState
 ) {
-    when (answerState) {
-        is PhotoDescribeUiState.Loading -> {
+    when (answerUiState) {
+        is PhotoDescribeAnswerUiState.Loading -> {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -323,7 +374,7 @@ private fun PhotoDescribeAnswerStateView(
             }
         }
 
-        is PhotoDescribeUiState.Error -> {
+        is PhotoDescribeAnswerUiState.Error -> {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -340,6 +391,6 @@ private fun PhotoDescribeAnswerStateView(
             }
         }
 
-        is PhotoDescribeUiState.Idle -> Unit
+        is PhotoDescribeAnswerUiState.Idle -> Unit
     }
 }

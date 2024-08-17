@@ -38,11 +38,12 @@ class PhotoDescribeViewModel @Inject constructor() : ViewModel() {
         )
     )
 
-    private val _answerState = MutableStateFlow<PhotoDescribeUiState>(PhotoDescribeUiState.Idle(""))
-    val answerState = _answerState.asStateFlow()
+    private val _answerUiState =
+        MutableStateFlow<PhotoDescribeAnswerUiState>(PhotoDescribeAnswerUiState.Idle(""))
+    val answerUiState = _answerUiState.asStateFlow()
 
-    private val _imageUri = MutableStateFlow<Uri?>(null)
-    val imageUri = _imageUri.asStateFlow()
+    private val _promptUiState = MutableStateFlow(PhotoDescribePromptUiState())
+    val promptUiState = _promptUiState.asStateFlow()
 
     fun send(bitmap: Bitmap, prompt: String) {
         if (prompt.isBlank()) return
@@ -53,7 +54,8 @@ class PhotoDescribeViewModel @Inject constructor() : ViewModel() {
         viewModelScope.launch {
             model.generateContentStream(content)
                 .onStart {
-                    _answerState.value = PhotoDescribeUiState.Loading("")
+                    _answerUiState.value = PhotoDescribeAnswerUiState.Loading("")
+                    _promptUiState.value = _promptUiState.value.copy(question = prompt)
                 }
                 .catch {
                     FirebaseCrashlytics.getInstance().apply {
@@ -61,23 +63,23 @@ class PhotoDescribeViewModel @Inject constructor() : ViewModel() {
                         log("Bitmap width: ${bitmap.width}, height: ${bitmap.height}, config: ${bitmap.config}")
                         recordException(it)
                     }
-                    _answerState.value = PhotoDescribeUiState.Error("")
+                    _answerUiState.value = PhotoDescribeAnswerUiState.Error("")
                 }
                 .onCompletion { exception ->
-                    if (_answerState.value !is PhotoDescribeUiState.Error) {
-                        val answer = _answerState.value.data.markdownToHtml()
-                        _answerState.value = PhotoDescribeUiState.Idle(answer)
+                    if (_answerUiState.value !is PhotoDescribeAnswerUiState.Error) {
+                        val answer = _answerUiState.value.data.markdownToHtml()
+                        _answerUiState.value = PhotoDescribeAnswerUiState.Idle(answer)
                     }
                 }
                 .collect {
-                    val partAnswer = "${_answerState.value.data}${it.text}"
-                    _answerState.value = PhotoDescribeUiState.Loading(partAnswer)
+                    val partAnswer = "${_answerUiState.value.data}${it.text}"
+                    _answerUiState.value = PhotoDescribeAnswerUiState.Loading(partAnswer)
                 }
         }
     }
 
     fun setSelectedUri(uri: Uri?) {
-        _answerState.value = PhotoDescribeUiState.Idle("")
-        _imageUri.value = uri
+        _answerUiState.value = PhotoDescribeAnswerUiState.Idle("")
+        _promptUiState.value = _promptUiState.value.copy(uri = uri)
     }
 }
