@@ -4,14 +4,8 @@ import android.graphics.Bitmap
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.ai.client.generativeai.GenerativeModel
-import com.google.ai.client.generativeai.type.BlockThreshold
-import com.google.ai.client.generativeai.type.HarmCategory
-import com.google.ai.client.generativeai.type.SafetySetting
-import com.google.ai.client.generativeai.type.content
-import com.google.ai.client.generativeai.type.generationConfig
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.leodemo.genai_android.BuildConfig
+import com.leodemo.genai_android.domain.repository.AiModelRepository
 import com.leodemo.genai_android.utils.extensions.markdownToHtml
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,20 +17,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class PhotoDescribeViewModel @Inject constructor() : ViewModel() {
-    private val model = GenerativeModel(
-        "gemini-1.5-flash",
-        BuildConfig.api_key,
-        generationConfig = generationConfig {
-            temperature = 0.5f
-        },
-        safetySettings = listOf(
-            SafetySetting(
-                HarmCategory.DANGEROUS_CONTENT,
-                BlockThreshold.NONE
-            )
-        )
-    )
+class PhotoDescribeViewModel @Inject constructor(
+    private val aiModelRepository: AiModelRepository
+) : ViewModel() {
 
     private val _answerUiState =
         MutableStateFlow<PhotoDescribeAnswerUiState>(PhotoDescribeAnswerUiState.Idle(""))
@@ -47,12 +30,8 @@ class PhotoDescribeViewModel @Inject constructor() : ViewModel() {
 
     fun send(bitmap: Bitmap, prompt: String) {
         if (prompt.isBlank()) return
-        val content = content {
-            image(bitmap)
-            text(prompt)
-        }
         viewModelScope.launch {
-            model.generateContentStream(content)
+            aiModelRepository.fetchTextImageGenerationStream(prompt, bitmap)
                 .onStart {
                     _answerUiState.value = PhotoDescribeAnswerUiState.Loading("")
                     _promptUiState.value = _promptUiState.value.copy(question = prompt)
@@ -72,7 +51,7 @@ class PhotoDescribeViewModel @Inject constructor() : ViewModel() {
                     }
                 }
                 .collect {
-                    val partAnswer = "${_answerUiState.value.data}${it.text}"
+                    val partAnswer = "${_answerUiState.value.data}${it}"
                     _answerUiState.value = PhotoDescribeAnswerUiState.Loading(partAnswer)
                 }
         }
