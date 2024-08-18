@@ -9,13 +9,17 @@ import android.speech.SpeechRecognizer
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.leodemo.genai_android.R
 import com.leodemo.genai_android.utils.SpeechRecognizerManager
@@ -102,10 +106,14 @@ fun SpeechRecognizerButton(
 private fun DefaultSpeechRecognizerIcon(
     onClick: () -> Unit
 ) {
-    IconButton(onClick = onClick) {
+    IconButton(
+        modifier = Modifier.size(30.dp),
+        onClick = onClick
+    ) {
         Icon(
             painter = painterResource(R.drawable.ic_mic),
-            contentDescription = null
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.secondary
         )
     }
 }

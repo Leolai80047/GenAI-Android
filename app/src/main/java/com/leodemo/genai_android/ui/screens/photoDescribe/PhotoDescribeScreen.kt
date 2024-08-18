@@ -9,10 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
@@ -21,10 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -42,25 +35,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.leodemo.genai_android.R
+import com.leodemo.genai_android.ui.component.ChatTextField
+import com.leodemo.genai_android.ui.component.DefaultChatTextFieldActionButton
 import com.leodemo.genai_android.ui.component.GenAITopAppBar
-import com.leodemo.genai_android.ui.component.SpeechRecognizerButton
 import com.leodemo.genai_android.ui.component.StyledAnswerText
 import com.leodemo.genai_android.ui.component.shape.ChatBubbleShape
 import com.leodemo.genai_android.utils.extensions.toBitmap
@@ -111,7 +102,7 @@ private fun PhotoDescribeContent(
             promptUiState = promptUiState,
             answer = answerUiState.data,
         )
-        PhotoInputField(
+        PhotoDescribeInputField(
             answerUiState = answerUiState,
             onSelectImage = onSelectImage,
             onSend = onSend,
@@ -214,7 +205,7 @@ private fun PhotoDescribeAnswerArea(
 }
 
 @Composable
-private fun PhotoInputField(
+private fun PhotoDescribeInputField(
     answerUiState: PhotoDescribeAnswerUiState,
     onSelectImage: (Uri) -> Unit,
     onSend: (String) -> Unit,
@@ -223,68 +214,25 @@ private fun PhotoInputField(
     var textFieldValue by remember {
         mutableStateOf(TextFieldValue(""))
     }
-    Row(
-        modifier = Modifier.background(MaterialTheme.colorScheme.secondary)
-    ) {
-        BasicTextField(
-            modifier = Modifier
-                .height(60.dp)
-                .fillMaxWidth()
-                .weight(1f)
-                .padding(10.dp),
-            value = textFieldValue,
-            onValueChange = { newValue ->
-                textFieldValue = newValue
-            },
-            maxLines = 1,
-            textStyle = TextStyle(
-                fontSize = 18.sp,
-                lineHeight = 24.sp,
-                color = MaterialTheme.colorScheme.primary
-            ),
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-            decorationBox = { innerTextField ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(RoundedCornerShape(25.dp))
-                        .background(MaterialTheme.colorScheme.surface)
-                        .padding(horizontal = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .weight(1f),
-                        contentAlignment = Alignment.CenterStart
-                    ) {
-                        innerTextField()
-                    }
-                    SpeechRecognizerButton(
-                        content = {
-                            PhotoDescribeInputFieldTrailIcon(
-                                painter = painterResource(R.drawable.ic_mic),
-                                onClick = it
-                            )
-                        },
-                        onResult = {
-                            textFieldValue = TextFieldValue(it)
-                        }
-                    )
-                    PhotoDescribeImagePicker(onSetImage = onSelectImage)
-                    PhotoDescribeCameraCapture(startCamera = startCamera)
+    ChatTextField(
+        value = textFieldValue,
+        onValueChange = { newValue ->
+            textFieldValue = newValue
+        },
+        trailingIcons = {
+            PhotoDescribeImagePicker(onSetImage = onSelectImage)
+            PhotoDescribeCameraCapture(startCamera = startCamera)
+        },
+        actionButton = {
+            DefaultChatTextFieldActionButton(
+                enable = answerUiState !is PhotoDescribeAnswerUiState.Loading,
+                onClick = {
+                    onSend(textFieldValue.text)
+                    textFieldValue = TextFieldValue("")
                 }
-            }
-        )
-        PhotoDescribeSendButton(
-            enable = answerUiState !is PhotoDescribeAnswerUiState.Loading,
-            onClick = {
-                onSend(textFieldValue.text)
-                textFieldValue = TextFieldValue("")
-            }
-        )
-    }
-
+            )
+        }
+    )
 }
 
 @Composable
@@ -300,26 +248,6 @@ private fun PhotoDescribeInputFieldTrailIcon(
             painter = painter,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.secondary
-        )
-    }
-}
-
-@Composable
-private fun RowScope.PhotoDescribeSendButton(
-    enable: Boolean,
-    onClick: () -> Unit
-) {
-    IconButton(
-        modifier = Modifier
-            .size(50.dp)
-            .align(Alignment.CenterVertically),
-        enabled = enable,
-        onClick = onClick
-    ) {
-        Icon(
-            imageVector = Icons.AutoMirrored.Default.Send,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSecondary
         )
     }
 }
