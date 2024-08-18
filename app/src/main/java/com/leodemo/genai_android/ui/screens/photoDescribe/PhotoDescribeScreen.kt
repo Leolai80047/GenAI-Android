@@ -6,7 +6,6 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -41,7 +39,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -53,7 +50,7 @@ import com.leodemo.genai_android.ui.component.ChatTextField
 import com.leodemo.genai_android.ui.component.DefaultChatTextFieldActionButton
 import com.leodemo.genai_android.ui.component.GenAITopAppBar
 import com.leodemo.genai_android.ui.component.StyledAnswerText
-import com.leodemo.genai_android.ui.component.shape.ChatBubbleShape
+import com.leodemo.genai_android.ui.component.UserMessageBubble
 import com.leodemo.genai_android.utils.extensions.toBitmap
 
 @Composable
@@ -122,41 +119,11 @@ private fun ColumnScope.PhotoDescribeChatArea(
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
     ) {
-        PhotoDescribeQuestionBubble(
-            text = promptUiState.question,
-            margin = 5.dp
-        )
+        UserMessageBubble(text = promptUiState.question)
         PhotoDescribeAnswerArea(
             uri = promptUiState.uri ?: Uri.EMPTY,
             answer = answer
         )
-    }
-}
-
-@Composable
-private fun PhotoDescribeQuestionBubble(
-    text: String,
-    margin: Dp
-) {
-    if (text.isBlank()) return
-    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-        val fraction = 0.8f
-        val maxAllowedWidth = maxWidth * fraction
-        Box(
-            modifier = Modifier
-                .widthIn(max = maxAllowedWidth)
-                .align(Alignment.CenterEnd)
-                .padding(top = 10.dp, end = 10.dp)
-                .clip(ChatBubbleShape(margin = margin))
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .padding(bottom = margin, end = margin)
-        ) {
-            Text(
-                modifier = Modifier.padding(5.dp),
-                text = text,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-        }
     }
 }
 

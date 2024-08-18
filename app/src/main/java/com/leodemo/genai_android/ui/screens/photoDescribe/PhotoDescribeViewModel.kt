@@ -42,7 +42,7 @@ class PhotoDescribeViewModel @Inject constructor(
                         log("Bitmap width: ${bitmap.width}, height: ${bitmap.height}, config: ${bitmap.config}")
                         recordException(it)
                     }
-                    _answerUiState.value = PhotoDescribeAnswerUiState.Error("")
+                    _answerUiState.value = PhotoDescribeAnswerUiState.Error("GenerateText error!")
                 }
                 .onCompletion { exception ->
                     if (_answerUiState.value !is PhotoDescribeAnswerUiState.Error) {
