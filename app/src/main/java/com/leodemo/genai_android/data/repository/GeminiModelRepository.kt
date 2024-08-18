@@ -19,4 +19,8 @@ class GeminiModelRepository @Inject constructor(
     ): Flow<String> {
         return model.generateTextByTextAndImageStream(prompt, bitmap)
     }
+
+    override fun fetchChatAnswerStream(prompt: String): Flow<String> {
+        return model.generateChatStream(prompt)
+    }
 }

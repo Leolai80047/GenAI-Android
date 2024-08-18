@@ -33,7 +33,7 @@ fun MenuScreen(
                 navigate(Screen.PhotoDescribeScreen)
             }
             MenuItem(text = "Chat Room") {
-                navigate(Screen.ChatScreen)
+                navigate(Screen.ChatRoomScreen)
             }
         }
     }

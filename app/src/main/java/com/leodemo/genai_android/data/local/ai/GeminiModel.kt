@@ -12,6 +12,10 @@ class GeminiModel @Inject constructor(
     private val model: GenerativeModel
 ) : AiModel() {
 
+    private val chat by lazy {
+        model.startChat()
+    }
+
     override fun generateTextByTextStream(prompt: String): Flow<String> {
         val content = content {
             text(prompt)
@@ -30,6 +34,15 @@ class GeminiModel @Inject constructor(
             image(bitmap)
         }
         return model.generateContentStream(content).map {
+            it.text ?: ""
+        }
+    }
+
+    override fun generateChatStream(prompt: String): Flow<String> {
+        val content = content {
+            text(prompt)
+        }
+        return chat.sendMessageStream(content).map {
             it.text ?: ""
         }
     }
