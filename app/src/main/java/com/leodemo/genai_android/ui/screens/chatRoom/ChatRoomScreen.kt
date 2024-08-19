@@ -1,24 +1,33 @@
 package com.leodemo.genai_android.ui.screens.chatRoom
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -35,7 +44,7 @@ import com.leodemo.genai_android.ui.component.UserMessageBubble
 fun ChatRoomScreen(
     viewModel: ChatRoomViewModel = hiltViewModel()
 ) {
-    val currentMessage by viewModel.newestMessage.collectAsStateWithLifecycle()
+    val messageUiState by viewModel.messageUiState.collectAsStateWithLifecycle()
     val historyMessage by viewModel.historyMessage.collectAsStateWithLifecycle()
     Scaffold(
         modifier = Modifier.imePadding(),
@@ -47,7 +56,7 @@ fun ChatRoomScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            currentMessage = currentMessage,
+            messageUiState = messageUiState,
             historyMessage = historyMessage,
             onSend = viewModel::sendMessage
         )
@@ -55,46 +64,50 @@ fun ChatRoomScreen(
 }
 
 @Composable
-fun ChatRoomContent(
+private fun ChatRoomContent(
     modifier: Modifier,
-    currentMessage: ChatMessage,
+    messageUiState: ChatRoomMessageUiState,
     historyMessage: List<ChatMessage>,
     onSend: (String) -> Unit,
 ) {
     Column(
         modifier = modifier.fillMaxSize()
     ) {
+        ChatRoomMessageStateView(messageUiState = messageUiState)
         ChatRoomChatArea(
-            currentMessage = currentMessage,
+            currentMessage = messageUiState.data,
             historyMessage = historyMessage,
         )
-        ChatRoomInputField(onSend = onSend)
+        ChatRoomInputField(
+            messageUiState = messageUiState,
+            onSend = onSend
+        )
     }
 }
 
 @Composable
-fun ColumnScope.ChatRoomChatArea(
+private fun ColumnScope.ChatRoomChatArea(
     currentMessage: ChatMessage,
     historyMessage: List<ChatMessage>,
 ) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .weight(1f)
-            .padding(10.dp),
+            .weight(1f),
+        contentPadding = PaddingValues(10.dp),
         reverseLayout = true
     ) {
         item {
-            ChatRoomChatItem(question = currentMessage.question, answer = currentMessage.answer)
+            ChatRoomChatItem(question = currentMessage.prompt, answer = currentMessage.answer)
         }
         items(historyMessage.reversed()) { message ->
-            ChatRoomChatItem(question = message.question, answer = message.answer)
+            ChatRoomChatItem(question = message.prompt, answer = message.answer)
         }
     }
 }
 
 @Composable
-fun ChatRoomChatItem(
+private fun ChatRoomChatItem(
     question: String,
     answer: String
 ) {
@@ -103,7 +116,7 @@ fun ChatRoomChatItem(
 }
 
 @Composable
-fun ChatRoomAnswerBubble(
+private fun ChatRoomAnswerBubble(
     answer: String
 ) {
     Card(
@@ -126,7 +139,8 @@ fun ChatRoomAnswerBubble(
 }
 
 @Composable
-fun ChatRoomInputField(
+private fun ChatRoomInputField(
+    messageUiState: ChatRoomMessageUiState,
     onSend: (String) -> Unit
 ) {
     var textFieldValue by remember {
@@ -139,6 +153,7 @@ fun ChatRoomInputField(
         },
         actionButton = {
             DefaultChatTextFieldActionButton(
+                enable = messageUiState !is ChatRoomMessageUiState.Loading,
                 onClick = onClick@{
                     if (textFieldValue.text.isBlank()) return@onClick
                     onSend(textFieldValue.text)
@@ -147,4 +162,44 @@ fun ChatRoomInputField(
             )
         }
     )
+}
+
+@Composable
+private fun ChatRoomMessageStateView(
+    messageUiState: ChatRoomMessageUiState
+) {
+    when (messageUiState) {
+        is ChatRoomMessageUiState.Loading -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(30.dp)
+                        .align(Alignment.Center),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+
+        is ChatRoomMessageUiState.Error -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp)
+                    .padding(10.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.error)
+            ) {
+                Text(
+                    modifier = Modifier.align(Alignment.Center),
+                    text = "Something went error!",
+                    color = MaterialTheme.colorScheme.onError
+                )
+            }
+        }
+
+        is ChatRoomMessageUiState.Idle -> Unit
+    }
 }
