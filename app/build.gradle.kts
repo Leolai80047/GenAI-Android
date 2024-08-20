@@ -76,7 +76,19 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+
+    // Junit4
     testImplementation(libs.junit)
+
+    // kotest
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotest.runner.junit4)
+    testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.kotest.property)
+
+    // coroutine test
+    testImplementation(libs.kotlinx.coroutines.test)
+
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
