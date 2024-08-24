@@ -27,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -38,6 +39,7 @@ import com.leodemo.genai_android.ui.component.DefaultChatTextFieldActionButton
 import com.leodemo.genai_android.ui.component.GenAITopAppBar
 import com.leodemo.genai_android.ui.component.StyledAnswerText
 import com.leodemo.genai_android.ui.component.UserMessageBubble
+import com.leodemo.genai_android.utils.TestTags
 
 
 @Composable
@@ -111,7 +113,9 @@ private fun SummarizeAnswerArea(
 @Composable
 private fun SummarizeText(description: String) {
     StyledAnswerText(
-        modifier = Modifier.padding(10.dp),
+        modifier = Modifier
+            .padding(10.dp)
+            .testTag(TestTags.SUMMARIZE_ANSWER),
         text = description,
         color = MaterialTheme.colorScheme.onSecondaryContainer
     )
@@ -152,6 +156,7 @@ private fun SummarizeAnswerStateView(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .testTag(TestTags.SUMMARIZE_LOADING)
             ) {
                 CircularProgressIndicator(
                     modifier = Modifier
@@ -170,6 +175,7 @@ private fun SummarizeAnswerStateView(
                     .padding(10.dp)
                     .clip(RoundedCornerShape(10.dp))
                     .background(MaterialTheme.colorScheme.error)
+                    .testTag(TestTags.SUMMARIZE_ERROR)
             ) {
                 Text(
                     modifier = Modifier.align(Alignment.Center),

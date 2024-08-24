@@ -5,6 +5,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -19,10 +23,17 @@ import com.leodemo.genai_android.ui.screens.summarize.SummarizeScreen
 
 private const val BITMAP_SELECT_KEY = "BITMAP_SELECT"
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun GenAiNavigation() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = Screen.MenuScreen) {
+    NavHost(
+        modifier = Modifier.semantics {
+            testTagsAsResourceId = true
+        },
+        navController = navController,
+        startDestination = Screen.MenuScreen
+    ) {
         composable<Screen.MenuScreen> {
             MenuScreen { screen ->
                 navController.navigate(screen)

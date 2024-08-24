@@ -21,7 +21,7 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.leodemo.genai_android.HiltTestRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -56,6 +56,9 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/licenses/ASM"
+            excludes += "win32-x86/attach_hotspot_windows.dll"
+            excludes += "win32-x86-64/attach_hotspot_windows.dll"
         }
     }
 }
@@ -89,10 +92,15 @@ dependencies {
     // coroutine test
     testImplementation(libs.kotlinx.coroutines.test)
 
+    // integration test
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+    androidTestImplementation(libs.androidx.uiautomator)
+    androidTestImplementation(libs.hilt.android.testing)
+    kaptAndroidTest(libs.com.google.dagger.hilt.android.compiler)
+
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 

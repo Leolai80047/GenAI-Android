@@ -22,10 +22,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.leodemo.genai_android.utils.TestTags
 
 @Composable
 fun ChatTextField(
@@ -42,7 +44,8 @@ fun ChatTextField(
                 .height(60.dp)
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(10.dp),
+                .padding(10.dp)
+                .testTag(TestTags.CHAT_TEXT_FIELD),
             value = value,
             onValueChange = onValueChange,
             maxLines = 1,
@@ -90,7 +93,8 @@ fun RowScope.DefaultChatTextFieldActionButton(
     IconButton(
         modifier = Modifier
             .size(50.dp)
-            .align(Alignment.CenterVertically),
+            .align(Alignment.CenterVertically)
+            .testTag(TestTags.CHAT_TEXT_SEND),
         enabled = enable,
         onClick = onClick
     ) {

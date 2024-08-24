@@ -12,9 +12,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.leodemo.genai_android.ui.component.shape.ChatBubbleShape
+import com.leodemo.genai_android.utils.TestTags
 
 @Composable
 fun UserMessageBubble(
@@ -33,6 +35,7 @@ fun UserMessageBubble(
                 .clip(ChatBubbleShape(margin = margin))
                 .background(MaterialTheme.colorScheme.primaryContainer)
                 .padding(bottom = margin, end = margin)
+                .testTag(TestTags.CHAT_BUBBLE)
         ) {
             Text(
                 modifier = Modifier.padding(5.dp),
