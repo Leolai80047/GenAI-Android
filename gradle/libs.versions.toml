@@ -16,6 +16,7 @@ composeBom = "2024.06.00"
 composeUi = "1.7.0-beta06"
 markdown = "0.7.3"
 mockk = "1.13.1"
+mockkAndroid = "1.13.1"
 navigationCompose = "2.8.0-beta07"
 secretsGradlePlugin = "2.0.1"
 dagger = "2.48"
@@ -53,6 +54,7 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 markdown = { module = "org.jetbrains:markdown", version.ref = "markdown" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockkAndroid" }
 secrets-gradle-plugin = { module = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:secrets-gradle-plugin", version.ref = "secretsGradlePlugin" }
 com-google-dagger-hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "dagger" }
 com-google-dagger-hilt-android-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "dagger" }

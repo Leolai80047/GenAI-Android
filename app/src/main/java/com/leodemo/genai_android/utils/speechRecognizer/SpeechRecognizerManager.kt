@@ -1,4 +1,4 @@
-package com.leodemo.genai_android.utils
+package com.leodemo.genai_android.utils.speechRecognizer
 
 import android.content.Context
 import android.content.Intent
@@ -9,10 +9,10 @@ import android.widget.Toast
 import java.util.Locale
 
 class SpeechRecognizerManager(
-    private val context: Context,
-    private val recognizerListener: RecognitionListener
+    private val context: Context
 ) {
     private var speechRecognizer: SpeechRecognizer? = null
+    private var recognizerListener: RecognitionListener? = null
     private var locale = Locale.getDefault()
     private val lang
         get() = locale.toString()
@@ -35,6 +35,10 @@ class SpeechRecognizerManager(
             speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
             speechRecognizer?.setRecognitionListener(recognizerListener)
         }
+    }
+
+    fun setRecognitionListener(recognitionListener: RecognitionListener) {
+        recognizerListener = recognitionListener
     }
 
     fun startVoice(locale: Locale? = this.locale) {

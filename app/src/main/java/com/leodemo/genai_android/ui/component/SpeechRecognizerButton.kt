@@ -3,9 +3,6 @@ package com.leodemo.genai_android.ui.component
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Bundle
-import android.speech.RecognitionListener
-import android.speech.SpeechRecognizer
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -15,51 +12,23 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.leodemo.genai_android.R
-import com.leodemo.genai_android.utils.SpeechRecognizerManager
+import com.leodemo.genai_android.utils.TestTags
+import com.leodemo.genai_android.utils.speechRecognizer.SpeechRecognizerManager
 import java.util.Locale
 
 @Composable
 fun SpeechRecognizerButton(
+    speechRecognizerManager: SpeechRecognizerManager,
     content: @Composable ((() -> Unit) -> Unit)? = null,
-    onResult: (String) -> Unit
 ) {
     val context = LocalContext.current
-    val speechListener = object : RecognitionListener {
-        override fun onReadyForSpeech(params: Bundle?) {}
-        override fun onBeginningOfSpeech() {}
-        override fun onRmsChanged(rmsdB: Float) {}
-        override fun onBufferReceived(buffer: ByteArray?) {}
-        override fun onEndOfSpeech() {}
-        override fun onError(error: Int) {}
-        override fun onResults(results: Bundle?) {
-            results?.let {
-                val matched = it.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                val text = matched?.firstOrNull()
-                if (text == null) {
-                    Toast.makeText(context, "Unable to recognize", Toast.LENGTH_LONG)
-                        .show()
-                } else {
-                    onResult(text)
-                }
-            }
-        }
-
-        override fun onPartialResults(partialResults: Bundle?) {}
-        override fun onEvent(eventType: Int, params: Bundle?) {}
-    }
-    val speechRecognizerManager = remember {
-        SpeechRecognizerManager(
-            context,
-            speechListener
-        )
-    }
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -107,7 +76,9 @@ private fun DefaultSpeechRecognizerIcon(
     onClick: () -> Unit
 ) {
     IconButton(
-        modifier = Modifier.size(30.dp),
+        modifier = Modifier
+            .size(30.dp)
+            .testTag(TestTags.SPEECH_RECOGNIZER_BUTTON),
         onClick = onClick
     ) {
         Icon(

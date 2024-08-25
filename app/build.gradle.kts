@@ -57,8 +57,10 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             excludes += "/META-INF/licenses/ASM"
-            excludes += "win32-x86/attach_hotspot_windows.dll"
-            excludes += "win32-x86-64/attach_hotspot_windows.dll"
+            excludes += "/META-INF/LICENSE.md"
+            excludes += "/META-INF/LICENSE-notice.md"
+            excludes += "/win32-x86/attach_hotspot_windows.dll"
+            excludes += "/win32-x86-64/attach_hotspot_windows.dll"
         }
     }
 }
@@ -99,6 +101,7 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     androidTestImplementation(libs.androidx.uiautomator)
     androidTestImplementation(libs.hilt.android.testing)
+    androidTestImplementation(libs.mockk.android)
     kaptAndroidTest(libs.com.google.dagger.hilt.android.compiler)
 
     debugImplementation(libs.androidx.ui.tooling)
